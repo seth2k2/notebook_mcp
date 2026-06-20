@@ -1,0 +1,14 @@
+[project]
+name = "notebook-mcp"
+version = "0.1.0"
+dependencies = [
+    "mcp",
+    "nbformat",
+    "nbconvert",
+    "jupyter-client",
+    "ipykernel",
+    "matplotlib"
+]
+
+[project.scripts]
+notebook-mcp = "notebook_mcp.server:main"
