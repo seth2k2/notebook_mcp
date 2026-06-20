@@ -5,10 +5,11 @@ requires-python = ">=3.10"
 dependencies = [
     "mcp",
     "nbformat",
-    "nbconvert",
+    "nbconvert[webpdf]",
     "jupyter-client",
     "ipykernel",
-    "matplotlib"
+    "matplotlib",
+    "playwright"
 ]
 
 [project.scripts]

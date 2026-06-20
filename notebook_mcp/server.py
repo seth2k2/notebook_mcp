@@ -408,6 +408,12 @@ def export_pdf(path: str, out_dir: str = "./exports"):
 
     try:
         from nbconvert import WebPDFExporter
+        import subprocess
+        import sys
+        
+        # Automatically ensure the headless browser is installed
+        subprocess.run([sys.executable, "-m", "playwright", "install", "chromium"], check=False, capture_output=True)
+
         exporter = WebPDFExporter()
         body, _ = exporter.from_notebook_node(nb)
 
@@ -421,7 +427,7 @@ def export_pdf(path: str, out_dir: str = "./exports"):
         return {
             "error": "PDF export failed",
             "reason": str(e),
-            "hint": "To enable PDF export without a full LaTeX installation, open your terminal and run: `pip install nbconvert[webpdf]` followed by `playwright install chromium`"
+            "hint": "Ensure playwright and nbconvert[webpdf] are installed."
         }
 
 
