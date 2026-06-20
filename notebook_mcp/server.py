@@ -1,13 +1,12 @@
 from mcp.server.fastmcp import FastMCP
-
 import os
 import uuid
 import base64
 import nbformat
 import queue
-
-from nbconvert import HTMLExporter, PythonExporter, PDFExporter
-
+import tempfile
+from pyhtml2pdf import converter
+from nbconvert import HTMLExporter, PythonExporter
 from jupyter_client import KernelManager
 from io import BytesIO
 
@@ -373,7 +372,8 @@ def export_html(path: str, out_dir: str = "./exports"):
     exporter = HTMLExporter()
     body, _ = exporter.from_notebook_node(nb)
 
-    out_path = os.path.join(out_dir, f"{uuid.uuid4()}.html")
+    notebook_name = os.path.splitext(os.path.basename(path))[0]
+    out_path = os.path.abspath(os.path.join(out_dir, f"{notebook_name}.html"))
     with open(out_path, "w", encoding="utf-8") as f:
         f.write(body)
 
@@ -391,7 +391,8 @@ def export_python(path: str, out_dir: str = "./exports"):
     exporter = PythonExporter()
     body, _ = exporter.from_notebook_node(nb)
 
-    out_path = os.path.join(out_dir, f"{uuid.uuid4()}.py")
+    notebook_name = os.path.splitext(os.path.basename(path))[0]
+    out_path = os.path.abspath(os.path.join(out_dir, f"{notebook_name}.py"))
     with open(out_path, "w", encoding="utf-8") as f:
         f.write(body)
 
@@ -401,34 +402,28 @@ def export_python(path: str, out_dir: str = "./exports"):
 @mcp.tool()
 def export_pdf(path: str, out_dir: str = "./exports"):
     """
-    Export the notebook to a PDF file using WebPDF (Playwright).
+    Convert a Jupyter notebook (.ipynb) to PDF using pyhtml2pdf.
     """
     nb = load_nb(path)
     os.makedirs(out_dir, exist_ok=True)
 
-    try:
-        from nbconvert import WebPDFExporter
-        import subprocess
-        import sys
-        
-        # Automatically ensure the headless browser is installed
-        subprocess.run([sys.executable, "-m", "playwright", "install", "chromium"], check=False, capture_output=True)
+    exporter = HTMLExporter()
+    body, _ = exporter.from_notebook_node(nb)
 
-        exporter = WebPDFExporter()
-        body, _ = exporter.from_notebook_node(nb)
+    notebook_name = os.path.splitext(os.path.basename(path))[0]
+    out_path = os.path.abspath(os.path.join(out_dir, f"{notebook_name}.pdf"))
 
-        out_path = os.path.join(out_dir, f"{uuid.uuid4()}.pdf")
-        with open(out_path, "wb") as f:
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmp_html = os.path.join(tmpdir, "temp.html")
+        with open(tmp_html, "w", encoding="utf-8") as f:
             f.write(body)
+        
+        tmp_html_abs = os.path.abspath(tmp_html)
+        converter.convert(f'file:///{tmp_html_abs}', out_path)
 
-        return {"pdf": out_path}
+    return {"pdf": out_path}
 
-    except Exception as e:
-        return {
-            "error": "PDF export failed",
-            "reason": str(e),
-            "hint": "Ensure playwright and nbconvert[webpdf] are installed."
-        }
+
 
 
 # -----------------------------
