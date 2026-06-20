@@ -64,6 +64,7 @@ Add this to your MCP settings:
     }
   }
 }
+```
 
 ## 🚀 What this does (uvx method)
 
